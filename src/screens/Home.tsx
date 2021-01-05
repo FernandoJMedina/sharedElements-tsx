@@ -1,4 +1,4 @@
-import React from 'react';
+import React, {useEffect, useState} from 'react';
 import {
   View,
   StyleSheet,
@@ -12,10 +12,132 @@ import TouchableScale from 'react-native-touchable-scale';
 import {HomeProps} from '../../App';
 import {SharedElement} from 'react-navigation-shared-element';
 import Feather from 'react-native-vector-icons/Feather';
+import Animated, {
+  useAnimatedProps,
+  useAnimatedStyle,
+  useSharedValue,
+  withDelay,
+  withSpring,
+  withTiming,
+} from 'react-native-reanimated';
+import {useFocusEffect} from '@react-navigation/native';
 
 const {width, height} = Dimensions.get('window');
 
+interface HorizontalCardProps {
+  item: {
+    id: number;
+    topic: string;
+    title: string;
+    readtime: string;
+    likes: number;
+    image: string;
+  };
+  animate: (
+    idx: number,
+  ) => {
+    opacity: number;
+    transform: {
+      translateY: number;
+    }[];
+  };
+  idx: number;
+}
+
+const HorizontalCard = ({item, animate, idx}: HorizontalCardProps) => {
+  const Styl = useAnimatedStyle(() => animate(idx));
+
+  return (
+    <Animated.View
+      style={[
+        {
+          flexDirection: 'row',
+          paddingBottom: 30,
+          paddingLeft: 30,
+          alignItems: 'center',
+        },
+        Styl,
+      ]}>
+      <View style={{marginRight: 30}}>
+        <Image
+          source={{uri: item.image}}
+          style={{width: 100, height: 100, borderRadius: 10}}
+        />
+      </View>
+
+      <View style={{width: '60%'}}>
+        <Text
+          style={{
+            color: 'orange',
+            fontWeight: 'bold',
+            marginBottom: 4,
+          }}>
+          {item.topic}
+        </Text>
+        <Text style={{fontWeight: 'bold', fontSize: 18, marginBottom: 10}}>
+          {item.title}
+        </Text>
+
+        <View
+          style={{
+            flexDirection: 'row',
+            alignItems: 'center',
+            opacity: 0.4,
+          }}>
+          <View
+            style={{
+              flexDirection: 'row',
+              alignItems: 'center',
+              marginRight: 16,
+            }}>
+            <Feather name="book-open" size={14} color="#000" />
+            <Text style={{marginHorizontal: 4, fontSize: 12}}>
+              {item.readtime}
+            </Text>
+          </View>
+
+          <View
+            style={{
+              flexDirection: 'row',
+              alignItems: 'center',
+              marginRight: 16,
+            }}>
+            <Feather name="thumbs-up" size={14} color="#000" />
+            <Text style={{marginHorizontal: 4, fontSize: 12}}>
+              {item.likes}
+            </Text>
+          </View>
+        </View>
+      </View>
+    </Animated.View>
+  );
+};
+
 const Home = ({navigation}: HomeProps) => {
+  const opacity = useSharedValue(0);
+  const translateY = useSharedValue(30);
+
+  useFocusEffect(
+    React.useCallback(() => {
+      opacity.value = 1;
+      translateY.value = 0;
+      return () => {
+        opacity.value = 0;
+        translateY.value = 30;
+      };
+    }, []),
+  );
+
+  const animate = (idx: number) => {
+    'worklet';
+    return {
+      opacity: withDelay((idx + 1) * 1000, withTiming(opacity.value)),
+      transform: [
+        {translateY: withDelay((idx + 1) * 1000, withSpring(translateY.value))},
+      ],
+    };
+  };
+
   return (
     <View style={{flex: 1}}>
       <View style={styles.header}>
@@ -44,7 +166,7 @@ const Home = ({navigation}: HomeProps) => {
           renderItem={({item}) => {
             return (
               <View>
-                <View>
+                <Animated.View>
                   <TouchableScale
                     activeScale={0.9}
                     tension={50}
@@ -68,7 +190,7 @@ const Home = ({navigation}: HomeProps) => {
                       style={{
                         width: width - 90,
                         position: 'absolute',
-                        bottom: 90,
+                        bottom: Dimensions.get('window').width < 375 ? 80 : 90,
                         left: 10,
                         paddingHorizontal: 10,
                       }}>
@@ -103,7 +225,7 @@ const Home = ({navigation}: HomeProps) => {
                       </View>
                     </View>
                   </TouchableScale>
-                </View>
+                </Animated.View>
               </View>
             );
           }}
@@ -125,69 +247,8 @@ const Home = ({navigation}: HomeProps) => {
       <FlatList
         data={popular}
         keyExtractor={(item) => item.id.toString()}
-        renderItem={({item}) => {
-          return (
-            <View
-              style={{
-                flexDirection: 'row',
-                paddingBottom: 30,
-                paddingLeft: 30,
-                alignItems: 'center',
-              }}>
-              <View style={{marginRight: 30}}>
-                <Image
-                  source={{uri: item.image}}
-                  style={{width: 100, height: 100, borderRadius: 10}}
-                />
-              </View>
-
-              <View style={{width: '60%'}}>
-                <Text
-                  style={{
-                    color: 'orange',
-                    fontWeight: 'bold',
-                    marginBottom: 4,
-                  }}>
-                  {item.topic}
-                </Text>
-                <Text
-                  style={{fontWeight: 'bold', fontSize: 18, marginBottom: 10}}>
-                  {item.title}
-                </Text>
-
-                <View
-                  style={{
-                    flexDirection: 'row',
-                    alignItems: 'center',
-                    opacity: 0.4,
-                  }}>
-                  <View
-                    style={{
-                      flexDirection: 'row',
-                      alignItems: 'center',
-                      marginRight: 16,
-                    }}>
-                    <Feather name="book-open" size={14} color="#000" />
-                    <Text style={{marginHorizontal: 4, fontSize: 12}}>
-                      {item.readtime}
-                    </Text>
-                  </View>
-
-                  <View
-                    style={{
-                      flexDirection: 'row',
-                      alignItems: 'center',
-                      marginRight: 16,
-                    }}>
-                    <Feather name="thumbs-up" size={14} color="#000" />
-                    <Text style={{marginHorizontal: 4, fontSize: 12}}>
-                      {item.likes}
-                    </Text>
-                  </View>
-                </View>
-              </View>
-            </View>
-          );
+        renderItem={({item, index}) => {
+          return <HorizontalCard item={item} animate={animate} idx={index} />;
         }}
       />
     </View>
@@ -236,7 +297,7 @@ const styles = StyleSheet.create({
   },
   blogTitle: {
     color: 'white',
-    fontSize: 24,
+    fontSize: Dimensions.get('window').width < 375 ? 20 : 24,
     fontWeight: 'bold',
     lineHeight: 28,
     textShadowOffset: {width: 1, height: 1},

@@ -11,11 +11,47 @@ import {
 import {SharedElement} from 'react-navigation-shared-element';
 import {DetailProps} from '../../App';
 import Feather from 'react-native-vector-icons/Feather';
+import Animated, {
+  useAnimatedStyle,
+  useSharedValue,
+  withDelay,
+  withSpring,
+  withTiming,
+} from 'react-native-reanimated';
+import {useFocusEffect} from '@react-navigation/native';
 
 const {width, height} = Dimensions.get('window');
 
 const Detail = ({route, navigation}: DetailProps) => {
   const {item} = route.params;
+
+  const opacity = useSharedValue(0);
+  const translateY = useSharedValue(30);
+
+  useFocusEffect(
+    React.useCallback(() => {
+      opacity.value = 0.5;
+      translateY.value = 0;
+      return () => {
+        opacity.value = 0;
+        translateY.value = 30;
+      };
+    }, []),
+  );
+
+  const style = useAnimatedStyle(() => {
+    return {
+      opacity: withDelay(200, withTiming(opacity.value)),
+      transform: [{translateY: withDelay(200, withSpring(translateY.value))}],
+    };
+  });
+
+  const style2 = useAnimatedStyle(() => {
+    return {
+      opacity: withDelay(300, withTiming(opacity.value)),
+      transform: [{translateY: withDelay(300, withSpring(translateY.value))}],
+    };
+  });
   return (
     <View style={styles.container}>
       <View>
@@ -94,13 +130,16 @@ const Detail = ({route, navigation}: DetailProps) => {
           </Text>
         </SharedElement>
 
-        <Text
-          style={{
-            fontSize: 14,
-            lineHeight: 28,
-            textAlign: 'justify',
-            opacity: 0.5,
-          }}>
+        <Animated.Text
+          style={[
+            {
+              fontSize: 14,
+              lineHeight: 28,
+              textAlign: 'justify',
+              opacity: 0.5,
+            },
+            style,
+          ]}>
           Lorem Ipsum is simply dummy text of the printing and typesetting
           industry. Lorem Ipsum has been the industry's standard dummy text ever
           since the 1500s, when an unknown printer took a galley of type and
@@ -110,14 +149,17 @@ const Detail = ({route, navigation}: DetailProps) => {
           the release of Letraset sheets containing Lorem Ipsum passages, and
           more recently with desktop publishing software like Aldus PageMaker
           including versions of Lorem Ipsum.
-        </Text>
-        <Text
-          style={{
-            fontSize: 14,
-            lineHeight: 28,
-            textAlign: 'justify',
-            opacity: 0.5,
-          }}>
+        </Animated.Text>
+        <Animated.Text
+          style={[
+            {
+              fontSize: 14,
+              lineHeight: 28,
+              textAlign: 'justify',
+              opacity: 0.5,
+            },
+            style2,
+          ]}>
           Lorem Ipsum is simply dummy text of the printing and typesetting
           industry. Lorem Ipsum has been the industry's standard dummy text ever
           since the 1500s, when an unknown printer took a galley of type and
@@ -127,7 +169,7 @@ const Detail = ({route, navigation}: DetailProps) => {
           the release of Letraset sheets containing Lorem Ipsum passages, and
           more recently with desktop publishing software like Aldus PageMaker
           including versions of Lorem Ipsum.
-        </Text>
+        </Animated.Text>
         <View
           style={{
             marginVertical: 25,
